@@ -138,7 +138,6 @@ class AutotuneDataset(Dataset):
         """
         substitute function for __getitem__ when using real-world data instead of shifting manually
         """
-        print('MZ num_shifts:', self.num_shifts)
         pyin = np.load(os.path.join(realworld_pyin_directory, self.performance_list[idx] + ".npy"))
         # load stft of vocals. They are already truncated to one minute, so use restrict=False
         cqt_v = np.abs(dataset_analysis.get_cqt(os.path.join(realworld_vocals_directory,
@@ -551,14 +550,10 @@ class Program:
     def autotune(self, data_dict):
         """ Realworld prediction function"""
         # set up and initialize
-        print('MZ num_notes', len(data_dict['shifted_pyin']))
-        print('MZ batch_size:', data_dict['shifts_gt'].size(2))
-        print('MZ', data_dict.keys())
-        print('MZ num spect_c', len(data_dict['spect_c']))
-        for s in data_dict['spect_c']:
-          print('MS', s.shape)
-          break
-        return
+        # print('MZ num_notes', len(data_dict['shifted_pyin']))
+        # print('MZ batch_size:', data_dict['shifts_gt'].size(2))
+        # print('MZ', data_dict.keys())
+        # print('MZ num spect_c', len(data_dict['spect_c']))
         with torch.no_grad():
             batch_size = data_dict['shifts_gt'].size(2)  # the batch size can vary at the last sample of an epoch
             # reset hidden states

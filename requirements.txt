@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
--r ../requirements.txt
->>>>>>> 976ac4dca955014ed1a55e2cccc616cfbc5066f7
 scikit-learn
 torch
 torchvision

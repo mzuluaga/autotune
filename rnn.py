@@ -506,7 +506,7 @@ class Program:
         self.criterion = nn.MSELoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
-        with open(os.path.join(self.results_root, 'program_args' + args.extension + '.txt'), 'w') as f:
+        with open(os.path.join(self.results_root, 'program_args' + self.extension + '.txt'), 'w') as f:
             f.write(','.join(
                 ["dropout " + str(self.global_dropout),
                  "hidden size " + str(self.hidden_size),
@@ -757,6 +757,45 @@ class Program:
                                         best_filename=self.best_checkpoint_file)
                 counter += 1
             logger.info("--- {0} time elapsed for one epoch ---".format(time.time() - start_time))
+
+
+
+import dataclasses
+
+@dataclasses.dataclass
+class Args:
+  gpu_id = 0
+  epochs=100
+  report_step=500
+  report_minibatch_idx=5
+  learning_rate=0.0005
+  num_shifts=7
+  training_songs_per_batch=1
+  test_songs_per_batch=1
+  global_dropout=0
+  max_norm=100.0
+  hidden_size=64
+  linear_size_1=256
+  linear_size_2=256
+  num_layers=1
+  resume=True
+  sandbox=False
+  small_dataset=False
+  run_training=True
+  run_testing=False
+  run_autotune=False
+  use_combination_channel=True
+  extension=""
+
+
+def infer(args):
+# create and clear directories
+  program = Program(extension=args.extension, hidden_size=args.hidden_size, global_dropout=args.global_dropout,
+                    gpu_id=args.gpu_id, learning_rate=args.learning_rate, resume=args.resume,
+                    small_dataset=args.small_dataset, max_norm=args.max_norm, num_layers=args.num_layers,
+                    num_shifts=args.num_shifts, epochs=args.epochs, report_step=args.report_step,
+                    sandbox=args.sandbox, use_combination_channel=args.use_combination_channel)
+  program.autotune_iters(dataloader=program.realworld_dataset)
 
 
 if __name__ == "__main__":

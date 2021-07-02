@@ -561,6 +561,15 @@ class Program:
         return
 
 
+def infer():
+# create and clear directories
+  program = Program(extension=args.extension, hidden_size=args.hidden_size, global_dropout=args.global_dropout,
+                    gpu_id=args.gpu_id, learning_rate=args.learning_rate, resume=args.resume,
+                    small_dataset=args.small_dataset, max_norm=args.max_norm, num_layers=args.num_layers,
+                    num_shifts=args.num_shifts, epochs=args.epochs, report_step=args.report_step,
+                    sandbox=args.sandbox, use_combination_channel=args.use_combination_channel)
+  program.autotune_iters(dataloader=program.realworld_dataset)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RNN for pitch correction predictions')
@@ -597,7 +606,7 @@ if __name__ == "__main__":
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
 
-    # create and clear directories
+# create and clear directories
     program = Program(extension=args.extension, hidden_size=args.hidden_size, global_dropout=args.global_dropout,
                       gpu_id=args.gpu_id, learning_rate=args.learning_rate, resume=args.resume,
                       small_dataset=args.small_dataset, max_norm=args.max_norm, num_layers=args.num_layers,

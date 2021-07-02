@@ -499,7 +499,7 @@ class Program:
         # model
         self.model = ConvRNN(hidden_size=self.hidden_size, num_layers=self.num_layers,
                              num_input_channels=self.num_input_channels).to(self.device)
-        utils.print_param_sizes(self.model)
+        #utils.print_param_sizes(self.model)
 
         # error and loss
         self.criterion = nn.MSELoss()

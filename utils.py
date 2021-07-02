@@ -283,9 +283,9 @@ def print_param_sizes(model):
     print("\n\nModel parameters, sizes, and freeze status:")
     child_counter = 0
     for child in model.children():
-        print("Child", child_counter, "is:", child)
+        #print("Child", child_counter, "is:", child)
         for param in child.parameters():
-            print("requires grad:", param.requires_grad == True)
+            # print("requires grad:", param.requires_grad == True)
             data = param.detach().cpu().numpy()
             if np.isscalar(data):
                 print(data)

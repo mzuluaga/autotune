@@ -25,10 +25,19 @@ import time
 import torch
 import traceback
 
+import scipy.io.wavfile
+
 # imports from parallel packages
 from globals import *
 from psola import psola_shift_pitch
 import dataset_analysis
+
+
+def write_wav(path, y, sr, norm):
+  if norm:
+    y = y / np.max(np.abs(y))
+  scipy.io.wavfile.write(path, sr, y)
+
 
 
 def buffer(y, frame_length, hop_length):
@@ -141,7 +150,6 @@ def parse_nvidia_smi():
 
     pprint.pprint(out_dict)
 
-
 def plot_lines(lines, title, layer_plot_directory):
     bplt.output_file(os.path.join(layer_plot_directory, title + ".html"))
     p1 = bplt.figure(title=title + "_1")  # for midi
@@ -156,7 +164,9 @@ def plot_lines(lines, title, layer_plot_directory):
         p2.line(np.arange(len(data2)), data2)  # plots second example in second figure
         p2.xaxis.axis_label = "frames"
         p2.yaxis.axis_label = "frequency"
-        bplt.save(bplt.gridplot([p1], [p2]))
+        mzplot = bplt.gridplot([p1], [p2])
+        bplt.save(mzplot)
+
 
 
 def plot_layer(data, title, dim, layer_plot_directory):
@@ -361,7 +371,8 @@ def save_outputs(results_numpy_dir, results_plot_dir, epoch, perf, outputs, labe
         s4.line(np.arange(frames), shifted_pitch_track_5, color='red')
         s4.line(np.arange(frames), corrected_pitch_track_5, color='green')
 
-        bplt.save(bplt.gridplot([s1], [s2], [s3], [s4]))
+        mzplot = bplt.gridplot([[s1], [s2], [s3], [s4]])
+        bplt.save(mzplot)
 
         np.save(os.path.join(
             results_numpy_dir, f_start + "_epoch_" + str(epoch) + "_outputs" + "_" + perf), outputs)
@@ -392,7 +403,7 @@ def synthesize_result(output_dir, perf, arr, outputs, labels_tensor, original_bo
     min_len = min([len(backing_audio), len(vocal_audio)])
     test_mix = vocal_audio[:min_len] + backing_audio[:min_len]  # check that the audio is correct
     # test_mix = test_mix[:30 * global_fs]
-    librosa.output.write_wav(test_mix_fpath, test_mix, sr=global_fs, norm=True)
+    write_wav(test_mix_fpath, test_mix, sr=global_fs, norm=True)
 
     # convert autotuner outputs to shape < notes, shifts >
     outputs = np.squeeze(outputs)
@@ -466,5 +477,5 @@ def synthesize_result(output_dir, perf, arr, outputs, labels_tensor, original_bo
     shifted_mix = np.array(shifted_audio[:min_len]) + backing_audio[:min_len]
     corrected_mix = np.array(corrected_audio[:min_len]) + backing_audio[:min_len]
 
-    librosa.output.write_wav(shifted_mix_fpath, shifted_mix, sr=global_fs, norm=True)
-    librosa.output.write_wav(corrected_mix_fpath, corrected_mix, sr=global_fs, norm=True)
+    write_wav(shifted_mix_fpath, shifted_mix, sr=global_fs, norm=True)
+    write_wav(corrected_mix_fpath, corrected_mix, sr=global_fs, norm=True)

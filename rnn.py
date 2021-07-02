@@ -32,6 +32,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def logger_info(msg):
+  # replaces logger.info
+  print(msg)
+
+
 class ConvRNN(nn.Module):
 
     def __init__(self, hidden_size, num_layers, num_input_channels):
@@ -146,7 +151,7 @@ class AutotuneDataset(Dataset):
         cqt_b = np.abs(dataset_analysis.get_cqt(os.path.join(realworld_backing_tracks_directory,
                 self.arr_keys[self.performance_list[idx]] + ".wav"), restrict=False)).T
         if self.arr_keys[self.performance_list[idx]] == "silent_backing_track":
-            logger.info("loading example backing track CQT")
+            logger_info("loading example backing track CQT")
             cqt_b = np.load(os.path.join(realworld_backing_tracks_directory, "survive_4_back_cqt.npy"))
         # np.save(os.path.join(realworld_backing_tracks_directory, "survive_4_back_cqt.npy"), cqt_b)
         # truncate pitch features to same length
@@ -352,7 +357,7 @@ class AutotuneDataset(Dataset):
                                                     dim=0)
         except Exception as e:
             tb = traceback.format_exc()
-            logger.info("exception in dataset {0} {1} skipping song {2}".format(e, tb, self.performance_list[idx]))
+            logger_info("exception in dataset {0} {1} skipping song {2}".format(e, tb, self.performance_list[idx]))
             return None
         return data_dict
 
@@ -366,10 +371,10 @@ def save_checkpoint(state, is_best, latest_filename, best_filename):
     """PyTorch helper function: saves the model to file and also overwrites model_best for early stopping"""
 
     torch.save(state, latest_filename)
-    logger.info("=> saved latest checkpoint at {0}".format(latest_filename))
+    logger_info("=> saved latest checkpoint at {0}".format(latest_filename))
     if is_best is True:
         torch.save(state, best_filename)
-        logger.info("=> saved best checkpoint at {0}".format(best_filename))
+        logger_info("=> saved best checkpoint at {0}".format(best_filename))
 
 
 def restore_checkpoint(resume, resume_file, device, model, optimizer):
@@ -382,7 +387,7 @@ def restore_checkpoint(resume, resume_file, device, model, optimizer):
     validation_losses = []
     if resume is True:
         if os.path.isfile(resume_file):
-            logger.info("=> loading checkpoint '{}'".format(resume_file))
+            logger_info("=> loading checkpoint '{}'".format(resume_file))
             if str(device) == 'cpu':
                 checkpoint = torch.load(resume_file, map_location=lambda storage, loc: storage)
             else:
@@ -393,9 +398,9 @@ def restore_checkpoint(resume, resume_file, device, model, optimizer):
             validation_losses = checkpoint['validation_losses']
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
-            logger.info("=> loaded checkpoint '{0}' (epoch {1})".format(resume_file, checkpoint['epoch']))
+            logger_info("=> loaded checkpoint '{0}' (epoch {1})".format(resume_file, checkpoint['epoch']))
         else:
-            logger.info("=> no checkpoint found at '{0}'".format(resume_file))
+            logger_info("=> no checkpoint found at '{0}'".format(resume_file))
     return best_prec1, start_epoch, training_losses, validation_losses, model, optimizer
 
 
@@ -494,7 +499,7 @@ class Program:
         # gpu versus cpu device
         # self.device = torch.device(self.gpu_id if torch.cuda.is_available() else "cpu")
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        logger.info("Using device: {}".format(self.device))
+        logger_info("Using device: {}".format(self.device))
 
         # model
         self.model = ConvRNN(hidden_size=self.hidden_size, num_layers=self.num_layers,
@@ -522,7 +527,7 @@ class Program:
         self.best_prec1, self.start_epoch, self.training_losses, self.validation_losses, self.model, self.optimizer = \
             restore_checkpoint(self.resume, self.resume_file, self.device, self.model, self.optimizer)
 
-        logger.info("losses: {0}, {1}".format(self.training_losses, self.validation_losses))
+        logger_info("losses: {0}, {1}".format(self.training_losses, self.validation_losses))
 
         # load the performance indices for the datasets
         performance_list = sorted(list(set([f[:-4] for f in os.listdir(pyin_directory) if "npy" in f])))
@@ -537,9 +542,9 @@ class Program:
             validation_list = validation_list[:1] + training_list[:1]
             training_list = training_list[:1]
             test_list = training_list[:1]
-            logger.info("training list {0} validation list {1}".format(training_list, validation_list))
+            logger_info("training list {0} validation list {1}".format(training_list, validation_list))
         else:
-            logger.info("training list length {0} validation list {1}".format(len(training_list), len(validation_list)))
+            logger_info("training list length {0} validation list {1}".format(len(training_list), len(validation_list)))
         # build custom datasets
         self.training_dataset = get_dataset(data_list=training_list, num_shifts=self.num_shifts)
         self.validation_dataset = get_dataset(data_list=validation_list, num_shifts=self.num_shifts)
@@ -678,7 +683,7 @@ class Program:
         return total_validation_loss / validation_batch_count
 
     def train_iters(self):
-        logger.info("number of parameters {0}".format(utils.get_n_params(self.model)))
+        logger_info("number of parameters {0}".format(utils.get_n_params(self.model)))
         for epoch in range(self.start_epoch, self.epochs + 1):
 
             start_time = time.time()
@@ -688,7 +693,7 @@ class Program:
             # training
             for i, data_dict in enumerate(self.training_dataset):
                 if i < 2 or i % 30 == 0 or counter < 1 or counter % 30 == 0:
-                    logger.info("epoch {0} step {1} counter {2}".format(epoch, i, counter))
+                    logger_info("epoch {0} step {1} counter {2}".format(epoch, i, counter))
                 if data_dict is None:
                     continue
                 save_song = True if i % self.report_step < 5 else False  # return the predictions from train() if true
@@ -710,14 +715,14 @@ class Program:
                     mean_validation_loss = self.validate_iters(epoch, self.validation_dataset)
                     mean_training_loss = total_training_loss / training_batch_count  # running average of training loss
                     # report current losses and print list of losses so far
-                    logger.info("***********************************************************************************")
-                    logger.info("{0}: Training and validation loss epoch {1} step {2} : {3} {4}".format(
+                    logger_info("***********************************************************************************")
+                    logger_info("{0}: Training and validation loss epoch {1} step {2} : {3} {4}".format(
                         self.extension, epoch, i, mean_training_loss, mean_validation_loss))
 
                     self.training_losses.append(mean_training_loss)
                     self.validation_losses.append(mean_validation_loss)
-                    logger.info("***********************************************************************************")
-                    logger.info("Training and validation losses so far:\n{0}\n{1}".format(
+                    logger_info("***********************************************************************************")
+                    logger_info("Training and validation losses so far:\n{0}\n{1}".format(
                         self.training_losses, self.validation_losses))
 
                     # plot the loss curves
@@ -735,12 +740,12 @@ class Program:
                     bplt.save(bplt.gridplot([fig_tr, fig_ev], [fig_cb, fig_fx]))
 
                     # save model and replace best if necessary
-                    logger.info("is_best before {0} mean loss {1} best prec {2}".format(self.is_best,
+                    logger_info("is_best before {0} mean loss {1} best prec {2}".format(self.is_best,
                                 mean_validation_loss, self.best_prec1))
 
                     self.is_best = True if mean_validation_loss < self.best_prec1 else False
                     self.best_prec1 = min(mean_validation_loss, self.best_prec1)
-                    logger.info("is_best after {0} mean loss {1} best prec {2}".format(self.is_best,
+                    logger_info("is_best after {0} mean loss {1} best prec {2}".format(self.is_best,
                                 mean_validation_loss, self.best_prec1))
 
                     if self.sandbox is False:
@@ -751,7 +756,7 @@ class Program:
                                         latest_filename=self.latest_checkpoint_file,
                                         best_filename=self.best_checkpoint_file)
                 counter += 1
-            logger.info("--- {0} time elapsed for one epoch ---".format(time.time() - start_time))
+            logger_info("--- {0} time elapsed for one epoch ---".format(time.time() - start_time))
 
 
 
@@ -785,6 +790,13 @@ class Args:
 
 def infer(args):
 # create and clear directories
+  logging.basicConfig(filename='log{0}.txt'.format(args.extension), filemode='w',
+                      format='%(asctime)s %(module)s %(levelname)s: %(message)s',
+                      datefmt='%m/%d/%Y %I:%M:%S %p',
+                      level=logging.INFO)
+  logging.StreamHandler().setLevel(logging.INFO)
+  logger.addHandler(logging.StreamHandler())
+
   program = Program(extension=args.extension, hidden_size=args.hidden_size, global_dropout=args.global_dropout,
                     gpu_id=args.gpu_id, learning_rate=args.learning_rate, resume=args.resume,
                     small_dataset=args.small_dataset, max_norm=args.max_norm, num_layers=args.num_layers,
@@ -842,6 +854,6 @@ if __name__ == "__main__":
         program.train_iters()
     if args.run_testing is True:
         mean_test_loss = program.test_iters(epoch=0, dataloader=program.test_dataset)
-        logger.info("Test loss: {0}".format(mean_test_loss))
+        logger_info("Test loss: {0}".format(mean_test_loss))
     if args.run_autotune is True:
         program.autotune_iters(dataloader=program.realworld_dataset)

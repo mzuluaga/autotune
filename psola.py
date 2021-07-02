@@ -106,7 +106,7 @@ def psola(signal, peaks, f_ratio):
     N = len(signal)
     # Interpolate
     new_signal = np.zeros(N)
-    new_peaks_ref = np.linspace(0, len(peaks) - 1, len(peaks) * f_ratio)
+    new_peaks_ref = np.linspace(0, len(peaks) - 1, int(len(peaks) * f_ratio))
     new_peaks = np.zeros(len(new_peaks_ref)).astype(int)
     for i in range(len(new_peaks)):
         weight = new_peaks_ref[i] % 1  # keep only decimals
